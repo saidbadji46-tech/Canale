@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بث مباشر — قنوات رسمية مجانية</title>
+<style>
+  :root{
+    --bg:#0f1720;
+    --card:#182333;
+    --border:#2a3a50;
+    --text:#eef2f7;
+    --muted:#93a3b8;
+    --accent:#3fa796;
+    --accent2:#e0a83e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;
+    min-height:100vh;
+  }
+  header{
+    padding:18px 16px;
+    text-align:center;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    background:var(--bg);
+    z-index:10;
+  }
+  header h1{margin:0;font-size:20px;}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px;}
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .tab{
+    flex:0 0 auto;
+    padding:8px 16px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--muted);
+    cursor:pointer;
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .tab.active{
+    background:var(--accent);
+    color:#04201c;
+    border-color:var(--accent);
+    font-weight:600;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    gap:14px;
+    padding:16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 12px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .15s;
+  }
+  .card:active{transform:scale(.97);}
+  .card .icon{
+    width:56px;height:56px;
+    margin:0 auto 10px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+  }
+  .card .name{font-size:14px;font-weight:600;}
+  .card .badge{
+    display:inline-block;
+    margin-top:8px;
+    font-size:10.5px;
+    color:#ff6b6b;
+    border:1px solid #ff6b6b55;
+    padding:2px 8px;
+    border-radius:10px;
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:40px 20px;
+    font-size:14px;
+  }
+
+  /* مشغل الفيديو */
+  .player-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.85);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .player-overlay.open{display:flex;}
+  .player-box{
+    width:100%;
+    max-width:900px;
+    background:#000;
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .player-box .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    background:var(--card);
+  }
+  .player-box .top span{font-size:14px;font-weight:600;}
+  .player-box .top button{
+    background:none;border:none;color:var(--text);
+    font-size:20px;cursor:pointer;
+  }
+  .player-frame-wrap{
+    position:relative;
+    padding-top:56.25%; /* نسبة 16:9 */
+    background:#000;
+  }
+  .player-frame-wrap iframe{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    border:0;
+  }
+
+  footer{
+    padding:20px 16px 40px;
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📺 بث مباشر — قنوات رسمية مجانية</h1>
+  <p>كل القنوات هنا تبث بثها الرسمي المجاني بنفسها عبر يوتيوب — التطبيق فقط يجمع الروابط</p>
+</header>
+
+<div class="tabs" id="tabs"></div>
+<div class="grid" id="grid"></div>
+
+<div class="player-overlay" id="playerOverlay">
+  <div class="player-box">
+    <div class="top">
+      <span id="playerTitle"></span>
+      <button id="closePlayer">✕</button>
+    </div>
+    <div class="player-frame-wrap">
+      <iframe id="playerFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<footer>
+  كل القنوات المعروضة تبث بثها المباشر بشكل رسمي ومجاني عبر منصة يوتيوب.<br>
+  هذا الموقع لا يستضيف أو يعالج أي فيديو — فقط يعرض البث الرسمي كما هو منشور من صاحب القناة.
+</footer>
+
+<script>
+/* ============================================================
+   قائمة القنوات — كل قناة هنا لها بث مباشر رسمي مجاني موثق
+   بتاريخ إعداد هذا الملف. تأكد بين وقت لآخر أن القناة مازالت
+   تبث فعلياً (يوتيوب أحياناً يبدل الـ channel id لو القناة تغيرت).
+
+   باش تزيد قناة جديدة:
+   1. روح لصفحة القناة الرسمية فيوتيوب
+   2. جيب الـ Channel ID تاعها (يبدأ بـ UC...) — تقدر تستعمل
+      أداة مجانية كيفاش commentpicker.com/youtube-channel-id.php
+      وتدخل فيها رابط القناة، تعطيك الـ ID مباشرة
+   3. زيد عنصر جديد فاللائحة تحت بنفس الشكل
+============================================================ */
+const CHANNELS = [
+  {
+    name: 'الجزيرة مباشر (مصر)',
+    category: 'اخبار',
+    icon: '📰',
+    channelId: 'UCz3BkhdJSP7l8CiZNG1RKeQ'
+  },
+  {
+    name: 'فرانس 24 عربية',
+    category: 'اخبار',
+    icon: '🌍',
+    channelId: 'UCdTyuXgmJkG_O8_75eqej-w'
+  },
+  {
+    name: 'سكاي نيوز عربية',
+    category: 'اخبار',
+    icon: '📡',
+    channelId: 'UCab1phyEEA0c82udQd5y61Q'
+  },
+  {
+    name: 'قناة القرآن الكريم (مكة المكرمة)',
+    category: 'دينية',
+    icon: '🕋',
+    channelId: 'UCos52azQNBgW63_9uDJoPDA'
+  },
+  {
+    name: 'الجزيرة الوثائقية',
+    category: 'تعليمية',
+    icon: '🎬',
+    channelId: 'UC0LSnqrwqtMwl2YwfUpO66g'
+  }
+];
+
+const CATEGORIES = ['الكل', 'اخبار', 'دينية', 'تعليمية'];
+
+let activeCategory = 'الكل';
+
+function renderTabs(){
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = CATEGORIES.map(c =>
+    `<button class="tab ${c===activeCategory?'active':''}" data-cat="${c}">${c}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCategory = btn.dataset.cat;
+      renderTabs();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid(){
+  const gridEl = document.getElementById('grid');
+  const list = activeCategory === 'الكل'
+    ? CHANNELS
+    : CHANNELS.filter(c => c.category === activeCategory);
+
+  if(!list.length){
+    gridEl.innerHTML = `<div class="empty">ما كاين حتى قناة فهاذ التصنيف حالياً</div>`;
+    return;
+  }
+
+  gridEl.innerHTML = list.map((c,i) => `
+    <div class="card" data-index="${CHANNELS.indexOf(c)}">
+      <div class="icon">${c.icon}</div>
+      <div class="name">${c.name}</div>
+      <div class="badge">🔴 مباشر</div>
+    </div>
+  `).join('');
+
+  gridEl.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const channel = CHANNELS[Number(card.dataset.index)];
+      openPlayer(channel);
+    });
+  });
+}
+
+function openPlayer(channel){
+  document.getElementById('playerTitle').textContent = channel.name;
+  document.getElementById('playerFrame').src =
+    `https://www.youtube.com/embed/live_stream?channel=${channel.channelId}&autoplay=1`;
+  document.getElementById('playerOverlay').classList.add('open');
+}
+
+function closePlayer(){
+  document.getElementById('playerOverlay').classList.remove('open');
+  document.getElementById('playerFrame').src = ''; /* يوقف الصوت */
+}
+
+document.getElementById('closePlayer').addEventListener('click', closePlayer);
+document.getElementById('playerOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'playerOverlay') closePlayer();
+});
+
+renderTabs();
+renderGrid();
+</script>
+
+</body>
+</html>
